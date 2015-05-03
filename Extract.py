@@ -12,73 +12,51 @@ def Extract(inputFile):
         
     print "Length: ", len(lines)
     
-    wordsKjv = {}
+    references = {}
+    verses = {}
         
+    # Each verse occupies 2 lines, the first line is the verse reverence,
+    # the second line is the verse text
     for lineIdx in range(0, len(lines), 2):
-        text.append(lines[lineIdx].strip('$ \n') + ' ' +  lines[lineIdx + 1].strip())
-        wordsLine = lines[lineIdx + 1].strip().split()
-        for word in wordsLine:
-            if word not in wordsKjv:
-                w = word.strip("[].,:;>")
-                wordsKjv[w] = w
+        # The verse reference is the key, the verse text is the value
+        verses[lines[lineIdx].strip('$ \n')] = lines[lineIdx + 1].strip('\n ')
         
-
-    for i in range(10):
-        print text[i]
+    for verse in verses.keys():         # for each verse
+        words = verses[verse].split()   # Split into words
         
-    with open("out.txt", mode='w') as wf:
-        wf.writelines(text)
-        for line in text:
-            wf.writelines(line.strip('$ ') + "\n")
+        for word in words:
+            w = word.strip("[].,:;>")   # Remove all formatting
             
-    #dc = {"wer":1, "sdf":"erw", "zxc":3}
-    #with open("dc.txt", mode='w') as wf:
-        #pickle.dump(dc, wf)
-        
-    #with open("dc.txt", mode='r') as rf:
-        #dcr = pickle.load(rf)
-        
-    k = wordsKjv.keys()
-    for i in range(10):
-        print k[i]
-    return
-
-def CreateDict(inputFile):
-    with open('out.txt') as fi:
-        lines = fi.readlines()
-        
-    print "Length: ", len(lines)
+            if 4 > len(w):              # Only 4 letters or longer
+                continue
+            
+            if w not in references:     # For each word, create a dictionary key
+                references[w] = []
+                
+            references[w].append(verse) # and then add a reference for each verse 
+                                        # that contains the word
     
-    wordsKjv = {}
+    with open("versepickle.txt", mode='w') as wf:   # Store the verses dictionary
+        pickle.dump(verses, wf)
         
-    for lineIdx in range(0, len(lines), 2):
-        text.append(lines[lineIdx].strip('$ \n') + ' ' +  lines[lineIdx + 1].strip())
-        wordsLine = lines[lineIdx + 1].strip().split()
-        for word in wordsLine:
-            if word not in wordsKjv:
-                w = word.strip("[].,:;>")
-                wordsKjv[w] = w
+    with open("refpickle.txt", mode='w') as wf:     # Store the references dictionary
+        pickle.dump(references, wf)    
         
-
-    for i in range(10):
-        print text[i]
+def GetVerses(word):
+    with open("refpickle.txt", mode='r') as rf:     # Read the references dictionary
+        references = pickle.load(rf)      
         
-    with open("out.txt", mode='w') as wf:
-        wf.writelines(text)
-        for line in text:
-            wf.writelines(line.strip('$ ') + "\n")
-            
-    #dc = {"wer":1, "sdf":"erw", "zxc":3}
-    #with open("dc.txt", mode='w') as wf:
-        #pickle.dump(dc, wf)
+    with open("versepickle.txt", mode='r') as rf:   # Read the verses dictionary
+        verses = pickle.load(rf)    
         
-    #with open("dc.txt", mode='r') as rf:
-        #dcr = pickle.load(rf)
-        
-    k = wordsKjv.keys()
-    for i in range(10):
-        print k[i]
-    return
+    try:
+        refs = references[word]
+    except KeyError:
+        print "No references found for '%s'" % word
+        return
+    for ref in refs:
+        print ref + ' ' + verses[ref]
 
 if __name__ == "__main__":
-    Extract (sys.argv[1])
+    # Extract (sys.argv[1])
+    GetVerses(sys.argv[1])
